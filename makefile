@@ -1,6 +1,5 @@
 
 # Change this if you like. 
-
 ifeq ($(TARGET),WINDOWS)
 	CPP := i686-w64-mingw32-g++
 else
@@ -15,16 +14,19 @@ AR := ar
 main_sources := $(shell find ./src -name "*.cpp")
 main_targets := $(patsubst %.cpp,%.o,$(main_sources))
 
-LINOUT := libtps.a
-WINOUT := libtps.dll
+test_sources := $(shell find ./test -name "*.cpp")
+test_targets := $(patsubst %.cpp,%.o,$(test_sources))
+
+
 
 ifeq ($(TARGET),WINDOWS)
-	OUTPUT_FILE ?= libtps.a
 	CPPFLAGS := $(WINFLAGS)
+	TEST_FILE := test.exe
+	OUTPUT_FILE := libtps.dll
 else
-	OUTPUT_FILE ?= libtps.a
 	CPPFLAGS := $(LINFLAGS)
-	BUILD_CMD := $(AR) rc $(OUTPUT_FILE) $(main_targets)
+	TEST_FILE := test.elf
+	OUTPUT_FILE := libtps.a
 endif
 
 # Some color codes. Not really gonna use all, but it's neat to have
@@ -44,7 +46,12 @@ purple := \e[0;35m
 reset_color := \e[0m
 
 
-.PHONY: build clean
+.PHONY: test build clean 
+
+# the test executable only runs if the target system is the same as the
+# host system.
+test: $(TEST_FILE)
+	@echo "$(GREEN)Test build finished.$(reset_color)"
 
 build: $(OUTPUT_FILE)
 	@echo "$(GREEN)Build finished.$(reset_color)"
@@ -52,10 +59,21 @@ build: $(OUTPUT_FILE)
 clean:
 	@rm -f $(main_targets)
 	@rm -f $(OUTPUT_FILE)
+	@rm -f *.dll
+	@rm -f *.a
 
 $(OUTPUT_FILE): $(main_targets)
-	$(AR) rc $@ $^
+	@echo "$(CYAN)[BUILD] -> Linking everything$(PURPLE)"
+ifeq ($(OUTPUT_FILE),libtps.a)
+	$(AR) rc $@ $^ 
+endif
+ifeq ($(OUTPUT_FILE),libtps.dll)
+	$(CPP) -shared $^ -lws2_32 -o $@
+endif
+
+$(TEST_FILE): $(test_targets) $(OUTPUT_FILE) 
+	$(CPP) $^ -o $@
 
 %.o : %.cpp
-	@echo "$(CYAN)[BUILD] -> Compiling $<$(reset_color)"
+	@echo "$(CYAN)[BUILD] -> Compiling $<$(PURPLE)"
 	$(CPP) $(CPPFLAGS) -c $^ -o $@

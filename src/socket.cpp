@@ -21,15 +21,10 @@ int Socket::Connect(string IP, int port) {
 	SocketInternal *i = internal;
 	
 	i->SetConnAddr((char*)IP.c_str(), port);
-	#ifdef __LINUX
+
 	if (connect(i->sock, (struct sockaddr*)&i->conn_addr, sizeof(i->conn_addr)) < 0) {
 		return -1;
 	}
-	#endif
-	
-	#ifdef __WINDOWS
-	
-	#endif
 	
 	state = Connected;
 	return 0;
@@ -37,7 +32,6 @@ int Socket::Connect(string IP, int port) {
 
 int Socket::Disconnect(void) {
 	if (state == Disconnected) return 0;
-	if (state != Connected) return 0;
 	
 	internal->Reset();
 	state = Disconnected;
@@ -48,17 +42,17 @@ int Socket::Listen(std::string IP, int port) {
 	if (internal == nullptr) return -1;
 	if (state != Disconnected) return -1;
 	
+	state = Listening;
 	internal->SetBoundAddr((char*)IP.c_str(), port);
 	if (bind(internal->sock, (struct sockaddr*)&internal->bound_addr, sizeof(internal->bound_addr)) < 0) {
-		internal->Reset();
-		throw "Cannot bind to the given address.";
+		Disconnect();
+		return -2;
 	}
 	if (listen(internal->sock, 10) < 0) {
-		internal->Reset();
-		throw "Cannot listen on the bound address.";
+		Disconnect();
+		return -3;
 	}
 	
-	state = Listening;
 	return 0;
 }
 
@@ -66,7 +60,6 @@ int Socket::Listen(std::string IP, int port) {
 bool Socket::CheckRead(void) {
 	if (timeout == 0) return true;
 	
-	#ifdef __LINUX
 	fd_set fds;
 	FD_ZERO(&fds);
 	FD_SET(internal->sock, &fds);
@@ -75,20 +68,18 @@ bool Socket::CheckRead(void) {
 	tv.tv_sec = 0;
 	tv.tv_usec = timeout;
 	int stat = select(internal->sock + 1, &fds, nullptr, nullptr, &tv);
+	FD_ZERO(&fds);
 	if (stat > 0) {
-		FD_ZERO(&fds);
 		return true;
 	} else if (stat < 0) {
-		/* Error */
+		/* Error. TODO: It may not be a good idea to use C++ exceptions
+		 * here... maybe use return values instead? although that may 
+		 * become confusing very quickly.
+		 */
 		Disconnect();
 		throw "Cannot select()";
 	}
-	FD_ZERO(&fds);
-	#endif
 	
-	#ifdef __WINDOWS
-	
-	#endif
 	
 	return false;
 }
@@ -139,6 +130,9 @@ std::string Socket::RecvStr(void) {
 	
 	char c;
 	while (CheckRead() == true) {
+		/* If select() tells us there is data to read but recv doesn't
+		 * return any data, there *must* be an error. 
+		 */
 		if (recv(internal->sock, &c, 1, 0) != 1) {
 			Disconnect();
 			return s;
@@ -159,31 +153,4 @@ int Socket::Recv(void *buf, int max_len) {
 	}
 	
 	return status;
-}
-
-
-int main(void) {
-	try {
-	Socket s;
-	cout << "Hello World!\n";
-	string ip;
-	cin >> ip;
-	int port;
-	cin >> port;
-	
-	s.timeout = 1000000;
-	s.Listen(ip, port);
-
-	Socket *ns = nullptr;
-	while (ns == nullptr) {
-		ns = s.Accept();
-		cout << "loop\n";
-	}
-	
-	cout << ns->RecvStr();
-	delete ns;
-	} catch (const char *s) {
-		cout << s << endl;
-	}
-	return 0; 
 }

@@ -17,10 +17,11 @@ namespace portsock {
 		 * is any way of doing this in a less C-like way, tell me.
 		 */
 		SocketInternal *internal;
-	public:
-		SocketState state;
 		
 		/* Timeout is in microseconds. This may change later.*/
+		
+	public:
+		SocketState state;
 		int timeout;
 		
 		Socket(void);

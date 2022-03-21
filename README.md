@@ -11,3 +11,9 @@ the same code for different operating systems with ease.
 # Building
 
 
+## Windows
+
+When building for windows, you need to have mingw installed, as the build
+system relies heavily on it. Furthermore, you need to also specify 
+the mingw library directory
+
