@@ -68,7 +68,7 @@ ifeq ($(OUTPUT_FILE),libtps.a)
 	$(AR) rc $@ $^ 
 endif
 ifeq ($(OUTPUT_FILE),libtps.dll)
-	$(CPP) -shared $^ -lws2_32 -o $@
+	$(CPP) -shared $^ -static-libgcc -static-libstdc++ -lws2_32 -o $@
 endif
 
 $(TEST_FILE): $(test_targets) $(OUTPUT_FILE) 

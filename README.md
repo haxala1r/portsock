@@ -14,6 +14,6 @@ the same code for different operating systems with ease.
 ## Windows
 
 When building for windows, you need to have mingw installed, as the build
-system relies heavily on it. Furthermore, you need to also specify 
-the mingw library directory
-
+system relies heavily on it, and you may have to set the compiler variable
+inside the makefile to set a different mingw executable if your installation
+isn't the same as that of debian.
