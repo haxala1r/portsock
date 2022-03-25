@@ -6,9 +6,9 @@ using namespace portsock;
 
 int main(void) {
 	/* This is a simple test function 
-	 * TODO: move this over to a test source.
+	 * TODO: have some actual tests?
 	 */
-	Socket s1, s2;
+	Socket s1;
 	string ip = "127.0.0.1";
 	int port = 6666;
 	

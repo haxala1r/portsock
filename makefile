@@ -18,11 +18,10 @@ test_sources := $(shell find ./test -name "*.cpp")
 test_targets := $(patsubst %.cpp,%.o,$(test_sources))
 
 
-
 ifeq ($(TARGET),WINDOWS)
 	CPPFLAGS := $(WINFLAGS)
 	TEST_FILE := test.exe
-	OUTPUT_FILE := libtps.dll
+	OUTPUT_FILE := libtps.a
 else
 	CPPFLAGS := $(LINFLAGS)
 	TEST_FILE := test.elf
@@ -58,9 +57,12 @@ build: $(OUTPUT_FILE)
 
 clean:
 	@rm -f $(main_targets)
+	@rm -f $(test_targets)
 	@rm -f $(OUTPUT_FILE)
 	@rm -f *.dll
 	@rm -f *.a
+	@rm -f *.elf
+	@rm -f *.exe
 
 $(OUTPUT_FILE): $(main_targets)
 	@echo "$(CYAN)[BUILD] -> Linking everything$(PURPLE)"
@@ -68,11 +70,16 @@ ifeq ($(OUTPUT_FILE),libtps.a)
 	$(AR) rc $@ $^ 
 endif
 ifeq ($(OUTPUT_FILE),libtps.dll)
-	$(CPP) -shared $^ -static-libgcc -static-libstdc++ -lws2_32 -o $@
+	@# this is currently unused, I just couldn't get dlls to work.
+	$(CPP) -shared $^ -lws2_32 -o $@
 endif
 
-$(TEST_FILE): $(test_targets) $(OUTPUT_FILE) 
-	$(CPP) $^ -o $@
+$(TEST_FILE): $(test_targets) $(OUTPUT_FILE)
+ifeq ($(TARGET),WINDOWS)
+	$(CPP) $^ -lws2_32 -static-libgcc -static-libstdc++ -o $@
+else
+	$(CPP) $^ -static-libgcc -static-libstdc++ -o $@
+endif
 
 %.o : %.cpp
 	@echo "$(CYAN)[BUILD] -> Compiling $<$(PURPLE)"
