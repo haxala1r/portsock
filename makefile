@@ -1,9 +1,9 @@
 
 # Change this if you like. 
 ifeq ($(TARGET),WINDOWS)
-	CPP := i686-w64-mingw32-g++
+	COMPILER := i686-w64-mingw32-g++
 else
-	CPP := g++
+	COMPILER := g++
 endif
 
 CPPFLAGS := -O3 -Wall -Wextra -Werror -Wshadow -Wconversion -Wunreachable-code -static
@@ -71,16 +71,17 @@ ifeq ($(OUTPUT_FILE),libtps.a)
 endif
 ifeq ($(OUTPUT_FILE),libtps.dll)
 	@# this is currently unused, I just couldn't get dlls to work.
-	$(CPP) -shared $^ -lws2_32 -o $@
+	$(COMPILER) -shared $^ -lws2_32 -o $@
 endif
 
 $(TEST_FILE): $(test_targets) $(OUTPUT_FILE)
 ifeq ($(TARGET),WINDOWS)
-	$(CPP) $^ -lws2_32 -static-libgcc -static-libstdc++ -o $@
+	@# We need to link with winsock2 as well on windows.
+	$(COMPILER) $^ -lws2_32 -mconsole -static-libgcc -static-libstdc++ -o $@
 else
-	$(CPP) $^ -static-libgcc -static-libstdc++ -o $@
+	$(COMPILER) $^ -static-libgcc -static-libstdc++ -o $@
 endif
 
 %.o : %.cpp
 	@echo "$(CYAN)[BUILD] -> Compiling $<$(PURPLE)"
-	$(CPP) $(CPPFLAGS) -c $^ -o $@
+	$(COMPILER) $(CPPFLAGS) -c $^ -o $@
