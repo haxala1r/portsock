@@ -163,14 +163,33 @@ vector<Socket> *PollSockets(vector<Socket> vs, int timeout) {
 	fd_set fds;
 	FD_ZERO(&fds);
 	
+	/* Linux needs the nfds parameter of select() to be set to the highest
+	 * numbered socket descriptor + 1, so we need to figure out what
+	 * that is if on linux.
+	 */
+	#ifdef __LINUX
+	int max = 0;
+	#endif
+	
 	for (unsigned int i = 0; i < vs.size(); i++) {
 		FD_SET(vs[i].internal->sock, &fds);
+		#ifdef __LINUX
+		if (vs[i].internal->sock > max) {
+			max = vs[i].internal->sock;
+		}
+		#endif
 	}
 	
 	struct timeval tv;
 	tv.tv_sec = 0;
 	tv.tv_usec = timeout;
-	int stat = select(internal->sock + 1, &fds, nullptr, nullptr, &tv);
+	#ifdef __LINUX
+	int stat = select(max + 1, &fds, nullptr, nullptr, &tv);
+	#endif
+	#ifdef __WINDOWS
+	int stat = select(0, &fds, nullptr, nullptr, &tv);
+	#endif
+	
 	
 	vector<Socket> *retv = new vector<Socket>;
 	if (stat >= 0) {
