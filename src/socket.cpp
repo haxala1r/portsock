@@ -154,3 +154,37 @@ int Socket::Recv(void *buf, int max_len) {
 	
 	return status;
 }
+
+/* This is an extended version of the CheckRead function 
+ * returned vector holds the sockets that can be read from
+ * NOTE: this is a WIP
+ */
+vector<Socket> *PollSockets(vector<Socket> vs, int timeout) {
+	fd_set fds;
+	FD_ZERO(&fds);
+	
+	for (unsigned int i = 0; i < vs.size(); i++) {
+		FD_SET(vs[i].internal->sock, &fds);
+	}
+	
+	struct timeval tv;
+	tv.tv_sec = 0;
+	tv.tv_usec = timeout;
+	int stat = select(internal->sock + 1, &fds, nullptr, nullptr, &tv);
+	
+	vector<Socket> *retv = new vector<Socket>;
+	if (stat >= 0) {
+		for (unsigned int i = 0; i < vs.size(); i++) {
+			if (FD_ISSET(vs[i].internal->sock, &fds)) {
+				retv->push_back(vs[i]);
+			}
+		}
+	}
+	
+	FD_ZERO(&fds);
+	if (stat < 0) {
+		throw "Cannot select()";
+	}
+	return retv;
+}
+

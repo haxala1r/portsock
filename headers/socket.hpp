@@ -1,6 +1,8 @@
 #ifndef PORTSOCK_H
 #define PORTSOCK_H
 
+#include <vector> 
+
 namespace portsock {
 	enum SocketState {
 		Disconnected=0,
@@ -10,7 +12,7 @@ namespace portsock {
 	
 	class SocketInternal;
 	class Socket {
-	private:
+	public:
 		/* We need to keep this in a pointer because the class
 		 * we use here would actually change depending on which platform
 		 * we're running. I'm not very well versed in C++, so if there
@@ -19,8 +21,6 @@ namespace portsock {
 		SocketInternal *internal;
 		
 		/* Timeout is in microseconds. This may change later.*/
-		
-	public:
 		SocketState state;
 		int timeout;
 		
@@ -43,7 +43,8 @@ namespace portsock {
 		int Recv(void *buf, int len);
 		
 	};
-};
+	std::vector<Socket> *PollSockets(std::vector<Socket> vs, int timeout);
+}
 
 
 

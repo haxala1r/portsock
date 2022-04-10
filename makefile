@@ -50,10 +50,10 @@ reset_color := \e[0m
 # the test executable only runs if the target system is the same as the
 # host system.
 test: $(TEST_FILE)
-	@echo "$(GREEN)Test build finished.$(reset_color)"
+	@echo "$(GREEN)PORTSOCK Test build finished.$(reset_color)"
 
 build: $(OUTPUT_FILE)
-	@echo "$(GREEN)Build finished.$(reset_color)"
+	@echo "$(GREEN)PORTSOCK Build finished.$(reset_color)"
 
 clean:
 	@rm -f $(main_targets)
@@ -79,7 +79,7 @@ ifeq ($(TARGET),WINDOWS)
 	@# We need to link with winsock2 as well on windows.
 	$(COMPILER) $^ -lws2_32 -mconsole -static-libgcc -static-libstdc++ -o $@
 else
-	$(COMPILER) $^ -static-libgcc -static-libstdc++ -o $@
+	$(COMPILER) $^ -o $@
 endif
 
 %.o : %.cpp
